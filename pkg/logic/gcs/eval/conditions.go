@@ -12,8 +12,9 @@ import (
 func (e *Eval) initConditionalFuncs(env *Env) {
 	funcs := map[string]func(*ast.CallExpr, *Env) (Obj, error){
 		// modifier
-		"has_modifier":   e.hasModifier,
-		"modifier_count": e.modifierCount,
+		"has_modifier":      e.hasModifier,
+		"modifier_count":    e.modifierCount,
+		"has_behavior_flag": e.hasBehaviorFlag,
 		// attribute
 		"ult_ready":       e.ultReady,
 		"skill_points":    e.skillPoints,
@@ -53,6 +54,7 @@ func (e *Eval) initEnums(env *Env) {
 		model.Path_value,
 		model.DamageType_value,
 		model.TargetType_value,
+		model.BehaviorFlag_value,
 	}
 	for _, enumMap := range enums {
 		for name, value := range enumMap {
@@ -413,4 +415,19 @@ func (e *Eval) isAlive(c *ast.CallExpr, env *Env) (Obj, error) {
 		return nil, fmt.Errorf("target %d is invalid", target)
 	}
 	return bton(e.engine.IsAlive(target)), nil
+}
+
+// has_behavior_flag(target, flag)
+func (e *Eval) hasBehaviorFlag(c *ast.CallExpr, env *Env) (Obj, error) {
+	objs, err := e.validateArguments(c.Args, env, typNum, typNum)
+	if err != nil {
+		return nil, err
+	}
+	target := key.TargetID(objs[0].(*number).ival)
+	flag := model.BehaviorFlag(objs[1].(*number).ival)
+
+	if !e.engine.IsValid(target) {
+		return nil, fmt.Errorf("target %d is invalid", target)
+	}
+	return bton(e.engine.HasBehaviorFlag(target, flag)), nil
 }
